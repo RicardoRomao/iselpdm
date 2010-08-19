@@ -20,7 +20,7 @@ public class Item {
         _title = title;
         _desc = desc;
         _image = image;
-        _expiryDate = expiryDate;
+        _expiryDate = expiryDate == null ? new Date(0) : expiryDate;
     }
 
     public int getId() { return _id; }
@@ -38,4 +38,6 @@ public class Item {
     public byte[] getImage() { return _image; }
     public void setImage(byte[] image) { _image = image; }
 
+    public Date getExpiryDate() { return _expiryDate; }
+    public void setExpiryDate(Date expiryDate){ _expiryDate = expiryDate; }
 }
