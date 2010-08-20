@@ -12,7 +12,7 @@ import java.util.Date;
  *
  * @author nuno.sousa
  */
-public class Translator{// implements IITemTranslator {
+public class ItemTranslator{// implements IITemTranslator {
 
     public static byte[] item2Byte(Item item) {
         String itemStr = item.getId() + "|"
