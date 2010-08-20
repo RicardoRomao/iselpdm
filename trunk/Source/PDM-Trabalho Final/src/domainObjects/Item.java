@@ -19,7 +19,7 @@ public class Item {
         _category = category;
         _title = title;
         _desc = desc;
-        _image = image;
+        _image = image == null ? new byte[0] : image;
         _expiryDate = expiryDate == null ? new Date(0) : expiryDate;
     }
 
