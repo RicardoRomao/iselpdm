@@ -14,17 +14,28 @@ public class KeyTranslator {
     public static RecordKey byte2RecordKey(byte[] byteArr){
         String key = new String(byteArr);
         String delimiter = "|";
+
         int lastIndex = 0;
         int delimiterindex = key.indexOf(delimiter);
+
         String idItem = key.substring(lastIndex, delimiterindex);
+
         lastIndex = delimiterindex + 1;
         delimiterindex = key.indexOf(delimiter, lastIndex);
+
         String idRecord = key.substring(lastIndex, delimiterindex);
-        String idImage = key.substring(delimiterindex + 1);
-        return new RecordKey(idItem, idRecord, idImage);
+
+        lastIndex = delimiterindex + 1;
+        delimiterindex = key.indexOf(delimiter, lastIndex);
+
+        String idImage = key.substring(lastIndex, delimiterindex);
+
+        boolean own = key.substring(delimiterindex + 1).equals("true");
+
+        return new RecordKey(idItem, idRecord, idImage, own);
     }
     public static byte[] RecordKey2byte(RecordKey key){
-        String keyStr = key.getIdItem() + "|" + key.getIdRecord() + "|" + key.getIdImage();
+        String keyStr = key.getIdItem() + "|" + key.getIdRecord() + "|" + key.getIdImage() + "|" + key.getOwn();
         return keyStr.getBytes();
     }
 }

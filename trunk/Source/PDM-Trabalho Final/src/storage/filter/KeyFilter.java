@@ -7,6 +7,7 @@ package storage.filter;
 
 import javax.microedition.rms.RecordFilter;
 import storage.recordKey.KeyTranslator;
+import storage.recordKey.RecordKey;
 
 /**
  *
@@ -14,14 +15,16 @@ import storage.recordKey.KeyTranslator;
  */
 public class KeyFilter implements RecordFilter {
 
-    public String _idItem;
+    private final String _idItem;
+    private final boolean _own;
 
-    public KeyFilter(String idItem){
+    public KeyFilter(String idItem, boolean own){
         _idItem = idItem;
+        _own = own;
     }
 
     public boolean matches(byte[] candidate) {
-        return KeyTranslator.byte2RecordKey(candidate).getIdItem().equalsIgnoreCase(_idItem);
+        RecordKey key = KeyTranslator.byte2RecordKey(candidate);
+        return ((_idItem != null) ? key.getIdItem().equalsIgnoreCase(_idItem) : true ) && key.getOwn() == _own;
     }
-
 }
