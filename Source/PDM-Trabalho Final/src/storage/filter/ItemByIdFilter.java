@@ -5,7 +5,7 @@
 
 package storage.filter;
 
-import domainObjects.translator.Translator;
+import domainObjects.translator.ItemTranslator;
 import javax.microedition.rms.RecordFilter;
 
 /**
@@ -20,6 +20,6 @@ public class ItemByIdFilter implements RecordFilter {
         _id = id;
     }
     public boolean matches(byte[] candidate) {
-        return Translator.byte2Item(candidate).getId() == _id;
+        return ItemTranslator.byte2Item(candidate).getId() == _id;
     }
 }
