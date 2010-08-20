@@ -23,10 +23,7 @@ public class ItemByCategoryFilter implements RecordFilter {
 
     public ItemByCategoryFilter(int categoryId, Vector excluded){
         _catId = categoryId;
-        Enumeration en = excluded.elements();
-        _excluded = new Vector();
-        while(en.hasMoreElements())
-            _excluded.addElement(((RecordKey)en.nextElement()).getIdItem());
+        _excluded = excluded;
     }
     public boolean matches(byte[] candidate) {
         Item i = ItemTranslator.byte2Item(candidate);

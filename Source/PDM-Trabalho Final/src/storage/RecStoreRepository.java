@@ -1,8 +1,3 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
-
 package storage;
 
 import domainObjects.Item;
@@ -14,7 +9,6 @@ import javax.microedition.rms.RecordStore;
 import javax.microedition.rms.RecordStoreException;
 import storage.Exception.NotExpectedException;
 import storage.filter.ItemByCategoryFilter;
-import storage.filter.ItemByIdFilter;
 import storage.filter.KeyFilter;
 import storage.recordKey.KeyTranslator;
 import storage.recordKey.RecordKey;
@@ -23,7 +17,6 @@ public class RecStoreRepository implements IRepository
 {    
     private static final String ITEM_RS_NAME = "PenPal_Item";
     private static final String KEY_RS_NAME = "PenPal_ItemKey";
-    private static final String OWN_KEY_RS_NAME = "PenPal_OwnItemKey";
     private static final String IMAGE_RS_NAME = "PenPal_Image";
 
     //IRepository
@@ -44,11 +37,15 @@ public class RecStoreRepository implements IRepository
         int recId = 0;
         Vector v = new Vector();
         Vector ownKeys = getAllOwnKeys();
+        Enumeration en = ownKeys.elements();
+        Vector ownId = new Vector();
+        while(en.hasMoreElements())
+            ownId.addElement(((RecordKey)en.nextElement()).getIdItem());
 
         try{
             rs = RecordStore.openRecordStore(ITEM_RS_NAME, true);
             RecordEnumeration re = rs.enumerateRecords(
-                    new ItemByCategoryFilter(cat, ownKeys),
+                    new ItemByCategoryFilter(cat, ownId),
                     null,
                     false);
 
@@ -77,8 +74,8 @@ public class RecStoreRepository implements IRepository
         if(key == null){
             idRecord = addItemRecord(i);
             idImage = saveImage(i.getImage());
-            key = new RecordKey(String.valueOf(i.getId()), String.valueOf(idRecord), String.valueOf(idImage));
-            addKey(key, false);
+            key = new RecordKey(String.valueOf(i.getId()), String.valueOf(idRecord), String.valueOf(idImage), false);
+            addKey(key);
         }else{
             updateImage(i.getImage(), key);
             updateItemRecord(i, key);
@@ -116,8 +113,8 @@ public class RecStoreRepository implements IRepository
         if(key == null){
             idRecord = addItemRecord(i);
             idImage = saveImage(i.getImage());
-            key = new RecordKey(String.valueOf(i.getId()), String.valueOf(idRecord), String.valueOf(idImage));
-            addKey(key, true);
+            key = new RecordKey(String.valueOf(i.getId()), String.valueOf(idRecord), String.valueOf(idImage), true);
+            addKey(key);
         }else{
             updateImage(i.getImage(), key);
             updateItemRecord(i, key);
@@ -137,9 +134,9 @@ public class RecStoreRepository implements IRepository
         RecordStore rs = null;
         byte[] itemByteArr = null;
         try{
-            rs = RecordStore.openRecordStore(own ? OWN_KEY_RS_NAME : KEY_RS_NAME, true);
+            rs = RecordStore.openRecordStore(KEY_RS_NAME, true);
             RecordEnumeration idRe = rs.enumerateRecords(
-                    new KeyFilter(String.valueOf(id))
+                    new KeyFilter(String.valueOf(id), own)
                     , null
                     , true);
             if(idRe.numRecords() > 0)
@@ -157,11 +154,11 @@ public class RecStoreRepository implements IRepository
             return KeyTranslator.byte2RecordKey(itemByteArr);
         return null;
     }
-    private void addKey(RecordKey key, boolean own){
+    private void addKey(RecordKey key){
         RecordStore rs = null;
         byte[] keyByteArr = KeyTranslator.RecordKey2byte(key);
         try{
-            rs = RecordStore.openRecordStore(own ? OWN_KEY_RS_NAME : KEY_RS_NAME, true);
+            rs = RecordStore.openRecordStore(KEY_RS_NAME, true);
             rs.addRecord(keyByteArr, 0, keyByteArr.length);
         }catch(RecordStoreException ex){
             throw new NotExpectedException("addKey: " + ex.getMessage());
@@ -177,9 +174,9 @@ public class RecStoreRepository implements IRepository
         RecordStore rs = null;
         byte[] keyByteArr = null;
         try{
-            rs = RecordStore.openRecordStore(own ? OWN_KEY_RS_NAME : KEY_RS_NAME, true);
+            rs = RecordStore.openRecordStore(KEY_RS_NAME, true);
             RecordEnumeration re = rs.enumerateRecords(
-                    new KeyFilter(String.valueOf(idItem)),
+                    new KeyFilter(String.valueOf(idItem), own),
                     null,
                     true);
             if(!re.hasNextElement())
@@ -205,8 +202,11 @@ public class RecStoreRepository implements IRepository
         RecordStore rs = null;
         Vector v = new Vector();
         try{
-            rs = RecordStore.openRecordStore(OWN_KEY_RS_NAME, true);
-            RecordEnumeration re = rs.enumerateRecords(null, null, true);
+            rs = RecordStore.openRecordStore(KEY_RS_NAME, true);
+            RecordEnumeration re = rs.enumerateRecords(
+                    new KeyFilter(null, true),
+                    null,
+                    true);
             while(re.hasNextElement())
                 v.addElement(KeyTranslator.byte2RecordKey(re.nextRecord()));
         }catch(RecordStoreException ex){
@@ -386,21 +386,8 @@ public class RecStoreRepository implements IRepository
         return count;
     }
     public int getOwnItemsCount(){
-        RecordStore rs = null;
-        int count = -1;
-        try{
-            rs = RecordStore.openRecordStore(OWN_KEY_RS_NAME, true);
-            count =  rs.getNumRecords();
-        }catch(RecordStoreException ex){
-            throw new NotExpectedException("GetOwnItemsCount - RecordStore: " + ex.getMessage());
-        }finally{
-            try{
-                rs.closeRecordStore();
-            }catch(RecordStoreException ex){
-                throw new NotExpectedException("GetOwnItemsCount: " + ex.getMessage());
-            }
-        }
-        return count;
+        Vector v = getAllOwnKeys();
+        return v.size();
     }
     public static void clearRecStores(){
         try{
@@ -410,8 +397,6 @@ public class RecStoreRepository implements IRepository
                     RecordStore.deleteRecordStore(KEY_RS_NAME);
                 if(recStoreList[i].equals(ITEM_RS_NAME))
                     RecordStore.deleteRecordStore(ITEM_RS_NAME);
-                if(recStoreList[i].equals(OWN_KEY_RS_NAME))
-                    RecordStore.deleteRecordStore(OWN_KEY_RS_NAME);
             }
         }catch(RecordStoreException ex){
             throw new NotExpectedException("Clearing RecordStores: " + ex.getMessage());
