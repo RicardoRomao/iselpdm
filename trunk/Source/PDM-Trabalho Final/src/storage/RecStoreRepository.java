@@ -9,13 +9,15 @@ import javax.microedition.rms.RecordStore;
 import javax.microedition.rms.RecordStoreException;
 import storage.Exception.NotExpectedException;
 import storage.filter.ItemByCategoryFilter;
-import storage.filter.KeyFilter;
+import storage.filter.KeyByItemIdFilter;
+import storage.filter.KeyByOwnFilter;
 import storage.recordKey.KeyTranslator;
 import storage.recordKey.RecordKey;
 
-public class RecStoreRepository implements IRepository
+public final class RecStoreRepository implements IRepository
 {    
     private static final String ITEM_RS_NAME = "PenPal_Item";
+    private static final String OWN_ITEM_RS_NAME = "PenPal_OwnItem";
     private static final String KEY_RS_NAME = "PenPal_ItemKey";
     private static final String IMAGE_RS_NAME = "PenPal_Image";
 
@@ -23,36 +25,28 @@ public class RecStoreRepository implements IRepository
 
     //Public Items
     public Item getItemByid(int id) {
-
-        RecordKey key = getItemRecordKey(id, false);
+        RecordKey key = getRecordKey(id);
         Item i = getItemRecord(key);
         i.setImage(getImageRecord(key));
         return i;
-
     }
     public Vector getItemsByCat(int cat) {
-
         RecordStore rs = null;
         Item item = null;
         int recId = 0;
         Vector v = new Vector();
-        Vector ownKeys = getAllOwnKeys();
-        Enumeration en = ownKeys.elements();
-        Vector ownId = new Vector();
-        while(en.hasMoreElements())
-            ownId.addElement(((RecordKey)en.nextElement()).getIdItem());
 
         try{
             rs = RecordStore.openRecordStore(ITEM_RS_NAME, true);
             RecordEnumeration re = rs.enumerateRecords(
-                    new ItemByCategoryFilter(cat, ownId),
+                    new ItemByCategoryFilter(cat),
                     null,
                     false);
 
             while(re.hasNextElement()){
                 recId = re.nextRecordId();
-                item = ItemTranslator.byte2Item(rs.getRecord(recId));
-                RecordKey key = getItemRecordKey(item.getId(), false);
+                item = ItemTranslator.byte2Item(rs.getRecord(recId));//A ver melhor
+                RecordKey key = getRecordKey(item.getId());
                 item.setImage(getImageRecord(key));
                 v.addElement(item);
             }
@@ -68,79 +62,111 @@ public class RecStoreRepository implements IRepository
         return v;
     }
     public void addItem(Item i) {
-        int idRecord;
-        int idImage;
-        RecordKey key = getItemRecordKey(i.getId(), false);
-        if(key == null){
-            idRecord = addItemRecord(i);
-            idImage = saveImage(i.getImage());
-            key = new RecordKey(String.valueOf(i.getId()), String.valueOf(idRecord), String.valueOf(idImage), false);
-            addKey(key);
-        }else{
-            updateImage(i.getImage(), key);
-            updateItemRecord(i, key);
-        }
+        saveItem(i, false);
     }
     public void deleteItem(Item i) {
-        RecordKey key = deleteKey(i.getId(), false);
+        RecordKey key = deleteKey(i.getId());
         if(key == null)
             return;
-        deleteImage(key);
+        deleteImageRecord(key);
         deleteItemRecord(key);
     }
 
     //Own Items
     public Vector getOwnItems() {
-
         Enumeration keys = getAllOwnKeys().elements();
-        Item item = null;
-        RecordKey key = null;
-        Vector v = new Vector();
-
-        while(keys.hasMoreElements()){
-            key = (RecordKey)keys.nextElement();
-            item = getItemRecord(key);
-            item.setImage(getImageRecord(key));
-            v.addElement(item);
-        }
-
-        return v;
+        return loadAllItems(keys);
     }
     public void addOwnItem(Item i) {
-        int idRecord;
-        int idImage;
-        RecordKey key = getItemRecordKey(i.getId(), true);
-        if(key == null){
-            idRecord = addItemRecord(i);
-            idImage = saveImage(i.getImage());
-            key = new RecordKey(String.valueOf(i.getId()), String.valueOf(idRecord), String.valueOf(idImage), true);
-            addKey(key);
-        }else{
-            updateImage(i.getImage(), key);
-            updateItemRecord(i, key);
-        }
+        saveItem(i, true);
     }
     public void deleteOwnItem(Item i) {
-        RecordKey key = deleteKey(i.getId(), true);
-        if(key == null)
-            return;
-        deleteImage(key);
-        deleteItemRecord(key);
+        deleteItem(i);
     }
 
     //IRepository End
 
-    private RecordKey getItemRecordKey(int id, boolean own){
+    private void saveItem(Item item, boolean own){
+        int idRecord;
+        int idImage;
+        RecordKey key = getRecordKey(item.getId());
+        if(key == null){
+            idRecord = addItemRecord(item, own);
+            idImage = addImageRecord(item.getImage());
+            key = new RecordKey(String.valueOf(item.getId()), String.valueOf(idRecord), String.valueOf(idImage), own);
+            addKey(key);
+        }else{
+            updateImageRecord(item.getImage(), key);
+            updateItemRecord(item, key);
+        }
+    }
+    private Vector loadAllItems(Enumeration keys){
+        RecordStore rsItem = null;
+        RecordStore rsImage = null;
+        RecordKey key = null;
+        Item item = null;
+        int recId;
+        int imageId;
+        Vector v = new Vector();
+        try{
+            rsItem = RecordStore.openRecordStore(OWN_ITEM_RS_NAME, true);
+            rsImage = RecordStore.openRecordStore(IMAGE_RS_NAME, true);
+            
+            while(keys.hasMoreElements()){
+                key = (RecordKey)keys.nextElement();
+                recId = Integer.parseInt(key.getIdRecord());
+                imageId = Integer.parseInt(key.getIdImage());
+                item = ItemTranslator.byte2Item(rsItem.getRecord(recId));
+                item.setImage(rsImage.getRecord(imageId));
+                v.addElement(item);
+            }
+        }catch(RecordStoreException ex){
+            throw new NotExpectedException("loadAll");
+        }finally{
+            try{
+                rsItem.closeRecordStore();
+                rsImage.closeRecordStore();
+            }catch(RecordStoreException ex){
+               throw new NotExpectedException("loadAll");
+            }
+        }
+        return v;
+    }
+    private Vector getAllOwnKeys(){
+        RecordStore rs = null;
+        Vector v = new Vector();
+        try{
+            rs = RecordStore.openRecordStore(KEY_RS_NAME, true);
+            RecordEnumeration re = rs.enumerateRecords(
+                    new KeyByOwnFilter(true),
+                    null,
+                    true);
+            while(re.hasNextElement())
+                v.addElement(KeyTranslator.byte2RecordKey(re.nextRecord()));
+        }catch(RecordStoreException ex){
+            throw new NotExpectedException("getAllOwnKeys: " + ex.getMessage());
+        }finally{
+            try{
+                rs.closeRecordStore();
+            }catch(RecordStoreException ex){
+               throw new NotExpectedException("getAllOwnKeys: " + ex.getMessage());
+            }
+        }
+        return v;
+    }
+
+    //CRUD Key
+    private RecordKey getRecordKey(int id){
         RecordStore rs = null;
         byte[] itemByteArr = null;
         try{
             rs = RecordStore.openRecordStore(KEY_RS_NAME, true);
-            RecordEnumeration idRe = rs.enumerateRecords(
-                    new KeyFilter(String.valueOf(id), own)
+            RecordEnumeration re = rs.enumerateRecords(
+                    new KeyByItemIdFilter(String.valueOf(id))
                     , null
                     , true);
-            if(idRe.numRecords() > 0)
-                itemByteArr = idRe.nextRecord();
+            if(re.hasNextElement())
+                itemByteArr = re.nextRecord();
         }catch(RecordStoreException ex){
             throw new NotExpectedException("GetItemRecordKey: " + ex.getMessage());
         }finally{
@@ -150,9 +176,7 @@ public class RecStoreRepository implements IRepository
                 throw new NotExpectedException("GetItemRecordKey: " + ex.getMessage());
             }
         }
-        if(itemByteArr != null)
-            return KeyTranslator.byte2RecordKey(itemByteArr);
-        return null;
+        return (itemByteArr == null) ? null : KeyTranslator.byte2RecordKey(itemByteArr);
     }
     private void addKey(RecordKey key){
         RecordStore rs = null;
@@ -170,13 +194,13 @@ public class RecStoreRepository implements IRepository
             }
         }
     }
-    private RecordKey deleteKey(int idItem, boolean own){
+    private RecordKey deleteKey(int idItem){
         RecordStore rs = null;
         byte[] keyByteArr = null;
         try{
             rs = RecordStore.openRecordStore(KEY_RS_NAME, true);
             RecordEnumeration re = rs.enumerateRecords(
-                    new KeyFilter(String.valueOf(idItem), own),
+                    new KeyByItemIdFilter(String.valueOf(idItem)),
                     null,
                     true);
             if(!re.hasNextElement())
@@ -197,30 +221,9 @@ public class RecStoreRepository implements IRepository
         if(keyByteArr != null)
             return KeyTranslator.byte2RecordKey(keyByteArr);
         return null;
-    }
-    private Vector getAllOwnKeys(){
-        RecordStore rs = null;
-        Vector v = new Vector();
-        try{
-            rs = RecordStore.openRecordStore(KEY_RS_NAME, true);
-            RecordEnumeration re = rs.enumerateRecords(
-                    new KeyFilter(null, true),
-                    null,
-                    true);
-            while(re.hasNextElement())
-                v.addElement(KeyTranslator.byte2RecordKey(re.nextRecord()));
-        }catch(RecordStoreException ex){
-            throw new NotExpectedException("getAllOwnKeys: " + ex.getMessage());
-        }finally{
-            try{
-                rs.closeRecordStore();
-            }catch(RecordStoreException ex){
-               throw new NotExpectedException("getAllOwnKeys: " + ex.getMessage());
-            }
-        }
-        return v;
-    }
+    }    
 
+    //CRUD Image
     private byte[] getImageRecord(RecordKey key){
         RecordStore rs = null;
         byte[] imageByteArr = null;
@@ -238,7 +241,7 @@ public class RecStoreRepository implements IRepository
         }
         return imageByteArr;
     }
-    private int saveImage(byte[] imgByteArr){
+    private int addImageRecord(byte[] imgByteArr){
         RecordStore rs = null;
         int idImage;
         try{
@@ -255,7 +258,7 @@ public class RecStoreRepository implements IRepository
         }
         return idImage;
     }
-    private void updateImage(byte[] imgByteArr, RecordKey key){
+    private void updateImageRecord(byte[] imgByteArr, RecordKey key){
         RecordStore rs = null;
         int idImage = Integer.parseInt(key.getIdImage());
         try{
@@ -271,7 +274,7 @@ public class RecStoreRepository implements IRepository
             }
         }
     }
-    private void deleteImage(RecordKey key){
+    private void deleteImageRecord(RecordKey key){
         RecordStore rs = null;
         int idRecord = Integer.parseInt(key.getIdImage());
         if(key == null)
@@ -290,6 +293,7 @@ public class RecStoreRepository implements IRepository
         }
     }
 
+    //CRUD Item Info
     private Item getItemRecord(RecordKey key){
 
         if(key == null)
@@ -300,7 +304,7 @@ public class RecStoreRepository implements IRepository
         int recPos = Integer.parseInt(key.getIdRecord());
 
         try{
-            rs = RecordStore.openRecordStore(ITEM_RS_NAME, true);
+            rs = RecordStore.openRecordStore(key.getOwn() ? OWN_ITEM_RS_NAME : ITEM_RS_NAME, true);
             itemByteArr = rs.getRecord(recPos);
         }catch(RecordStoreException ex){
             throw new NotExpectedException("GetItemById - Record Store: " + ex.getMessage());
@@ -311,16 +315,14 @@ public class RecStoreRepository implements IRepository
                 throw new NotExpectedException("GetItemById - Record Store: " + ex.getMessage());
             }
         }
-        if(itemByteArr == null)
-            return null;
-        return ItemTranslator.byte2Item(itemByteArr);
+        return (itemByteArr == null) ? null : ItemTranslator.byte2Item(itemByteArr);
     }
-    private int addItemRecord(Item item){
+    private int addItemRecord(Item item, boolean own){
         RecordStore rs = null;
         int recordId;
         byte[] itemByteArr = ItemTranslator.item2Byte(item);
         try{
-            rs = RecordStore.openRecordStore(ITEM_RS_NAME, true);
+            rs = RecordStore.openRecordStore(own ? OWN_ITEM_RS_NAME : ITEM_RS_NAME, true);
             recordId = rs.addRecord(itemByteArr, 0, itemByteArr.length);
         }catch(RecordStoreException ex){
             throw new NotExpectedException("addItemRecord: " + ex.getMessage());
@@ -338,7 +340,7 @@ public class RecStoreRepository implements IRepository
         int recordId = Integer.parseInt(key.getIdRecord());
         byte[] itemByteArr = ItemTranslator.item2Byte(item);
         try{
-            rs = RecordStore.openRecordStore(ITEM_RS_NAME, true);
+            rs = RecordStore.openRecordStore(key.getOwn() ? OWN_ITEM_RS_NAME : ITEM_RS_NAME, true);
             rs.setRecord(recordId, itemByteArr, 0, itemByteArr.length);
         }catch(RecordStoreException ex){
             throw new NotExpectedException("addItemRecord: " + ex.getMessage());
@@ -354,7 +356,7 @@ public class RecStoreRepository implements IRepository
         RecordStore rs = null;
         int recordId = Integer.parseInt(key.getIdRecord());
         try{
-            rs = RecordStore.openRecordStore(ITEM_RS_NAME, true);
+            rs = RecordStore.openRecordStore(key.getOwn() ? OWN_ITEM_RS_NAME : ITEM_RS_NAME, true);
             rs.deleteRecord(recordId);
         }catch(RecordStoreException ex){
             throw new NotExpectedException("addItemRecord: " + ex.getMessage());
@@ -373,7 +375,11 @@ public class RecStoreRepository implements IRepository
         int count = -1;
         try{
             rs = RecordStore.openRecordStore(KEY_RS_NAME, true);
-            count =  rs.getNumRecords();
+            RecordEnumeration re = rs.enumerateRecords(
+                    new KeyByOwnFilter(false),
+                    null,
+                    true);
+            count =  re.numRecords();
         }catch(RecordStoreException ex){
             throw new NotExpectedException("GetItemsCount - RecordStore: " + ex.getMessage());
         }finally{
@@ -397,6 +403,8 @@ public class RecStoreRepository implements IRepository
                     RecordStore.deleteRecordStore(KEY_RS_NAME);
                 if(recStoreList[i].equals(ITEM_RS_NAME))
                     RecordStore.deleteRecordStore(ITEM_RS_NAME);
+                if(recStoreList[i].equals(OWN_ITEM_RS_NAME))
+                    RecordStore.deleteRecordStore(OWN_ITEM_RS_NAME);
             }
         }catch(RecordStoreException ex){
             throw new NotExpectedException("Clearing RecordStores: " + ex.getMessage());

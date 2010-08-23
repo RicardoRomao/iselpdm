@@ -58,7 +58,7 @@ public class ItemRecordStoreTest extends TestCase {
         IRepository rep = new RecStoreRepository();
         Item i = new Item(1, 1, "tittle", "description", null, new Date());
         rep.addItem(i);
-        assertTrue(true);
+        assertTrue(rep.getItemsCount() == 1);
     }
     //2
     private void canGetItem(){

@@ -19,14 +19,12 @@ import storage.recordKey.RecordKey;
 public class ItemByCategoryFilter implements RecordFilter {
 
     private final int _catId;
-    private final Vector _excluded;
 
-    public ItemByCategoryFilter(int categoryId, Vector excluded){
-        _catId = categoryId;
-        _excluded = excluded;
+    public ItemByCategoryFilter(int categoryId){
+        _catId = categoryId;        
     }
     public boolean matches(byte[] candidate) {
         Item i = ItemTranslator.byte2Item(candidate);
-        return i.getCategory() == _catId && !_excluded.contains(String.valueOf(i.getId()));
+        return i.getCategory() == _catId;
     }
 }

@@ -27,12 +27,12 @@ public class KeyTranslator {
 
         lastIndex = delimiterindex + 1;
         delimiterindex = key.indexOf(delimiter, lastIndex);
-
+        
         String idImage = key.substring(lastIndex, delimiterindex);
 
-        boolean own = key.substring(delimiterindex + 1).equals("true");
+        boolean ownValue = key.substring(delimiterindex + 1).equalsIgnoreCase("true");
 
-        return new RecordKey(idItem, idRecord, idImage, own);
+        return new RecordKey(idItem, idRecord, idImage, ownValue);
     }
     public static byte[] RecordKey2byte(RecordKey key){
         String keyStr = key.getIdItem() + "|" + key.getIdRecord() + "|" + key.getIdImage() + "|" + key.getOwn();
