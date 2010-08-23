@@ -13,18 +13,16 @@ import storage.recordKey.RecordKey;
  *
  * @author nuno.sousa
  */
-public class KeyFilter implements RecordFilter {
+public class KeyByItemIdFilter implements RecordFilter {
 
     private final String _idItem;
-    private final boolean _own;
 
-    public KeyFilter(String idItem, boolean own){
+    public KeyByItemIdFilter(String idItem){
         _idItem = idItem;
-        _own = own;
     }
 
     public boolean matches(byte[] candidate) {
         RecordKey key = KeyTranslator.byte2RecordKey(candidate);
-        return ((_idItem != null) ? key.getIdItem().equalsIgnoreCase(_idItem) : true ) && key.getOwn() == _own;
+        return key.getIdItem().equalsIgnoreCase(_idItem);
     }
 }

@@ -2,10 +2,10 @@ package storage.recordKey;
 
 public class RecordKey {
 
-    private String _idItem;
-    private String _idRecord;
+    private final String _idItem;
+    private final String _idRecord;
     private String _idImageRecord;
-    private boolean _own;
+    private final boolean _own;
     
     public RecordKey(String idItem, String idRecord, String idImageRecord, boolean own){
         _idItem = idItem;
@@ -19,5 +19,4 @@ public class RecordKey {
     public String getIdImage(){ return _idImageRecord;}
     public void setIdImage(String idImageRecord){ _idImageRecord = idImageRecord;}
     public boolean getOwn(){ return _own; }
-    
 }

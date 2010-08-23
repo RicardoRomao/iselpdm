@@ -13,7 +13,7 @@ public class OwnItemRecordStoreTest extends TestCase {
 
     public OwnItemRecordStoreTest(){
         //The first parameter of inherited constructor is the number of test cases
-        super(5,"ItemRecordStoreTest");
+        super(5,"OwnItemRecordStoreTest");
     }
     public void test(int i) throws Throwable {
         switch(i){
@@ -40,7 +40,7 @@ public class OwnItemRecordStoreTest extends TestCase {
     //0
     private void canAddItem(){
         IRepository rep = new RecStoreRepository();
-        Item i = new Item(1, 1, "tittle", "description", null, new Date());
+        Item i = new Item(11, 1, "tittle", "description", null, new Date());
         try{
             rep.addOwnItem(i);
             assertTrue(true);
@@ -50,14 +50,14 @@ public class OwnItemRecordStoreTest extends TestCase {
     }
     //1
     private void canGetAllOwnItems(){
-        Item i1 = new Item(1, 1, "tittle1", "description1", null, new Date());
-        Item i2 = new Item(2, 1, "tittle2", "description2", null, new Date());
-        Item i3 = new Item(3, 2, "tittle3", "description3", null, new Date());
-        Item i4 = new Item(4, 2, "tittle4", "description4", null, new Date());
-        Item i5 = new Item(5, 2, "tittle5", "description5", null, new Date());
-        Item i6 = new Item(6, 2, "tittle6", "description6", null, new Date());
-        Item i7 = new Item(7, 3, "tittle7", "description7", null, new Date());
-        Item i8 = new Item(8, 1, "tittle8", "description8", null, new Date());
+        Item i1 = new Item(11, 1, "tittle1", "description1", null, new Date());
+        Item i2 = new Item(12, 1, "tittle2", "description2", null, new Date());
+        Item i3 = new Item(13, 2, "tittle3", "description3", null, new Date());
+        Item i4 = new Item(14, 2, "tittle4", "description4", null, new Date());
+        Item i5 = new Item(15, 2, "tittle5", "description5", null, new Date());
+        Item i6 = new Item(16, 2, "tittle6", "description6", null, new Date());
+        Item i7 = new Item(17, 3, "tittle7", "description7", null, new Date());
+        Item i8 = new Item(18, 1, "tittle8", "description8", null, new Date());
 
         IRepository rep = new RecStoreRepository();
         rep.addOwnItem(i1);
@@ -77,7 +77,7 @@ public class OwnItemRecordStoreTest extends TestCase {
         IRepository rep = new RecStoreRepository();
         int count = rep.getOwnItemsCount();
 
-        Item i3 = new Item(3, 2, "tittle3", "description3", null, new Date());
+        Item i3 = new Item(13, 2, "tittle3", "description3", null, new Date());
         rep.deleteOwnItem(i3);
 
         assertTrue(rep.getOwnItemsCount() == --count);
@@ -85,7 +85,7 @@ public class OwnItemRecordStoreTest extends TestCase {
     //3
     private void canInsertTwicetheSameOwnItem(){
         IRepository rep = new RecStoreRepository();
-        Item i9 = new Item(9, 1, "tittle9", "description9", null, new Date());
+        Item i9 = new Item(19, 1, "tittle9", "description9", null, new Date());
 
         int count = rep.getOwnItemsCount();
 
@@ -98,7 +98,7 @@ public class OwnItemRecordStoreTest extends TestCase {
     //4
     private void canUpdateOwnItem(){
         IRepository rep = new RecStoreRepository();
-        Item i10 = new Item(10, 1, "tittle10", "description10", null, new Date());
+        Item i10 = new Item(20, 1, "tittle10", "description10", null, new Date());
 
         rep.addOwnItem(i10);
 
@@ -110,7 +110,7 @@ public class OwnItemRecordStoreTest extends TestCase {
         Enumeration en = v.elements();
         while(en.hasMoreElements()){
             Item i = (Item)en.nextElement();
-            if(i.getId() == 10)
+            if(i.getId() == 20)
                 assertTrue(i.getDesc().equals("description10_new"));
         }
     }
