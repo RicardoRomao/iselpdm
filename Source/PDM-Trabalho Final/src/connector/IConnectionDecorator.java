@@ -11,7 +11,7 @@ public interface IConnectionDecorator {
     public void cancelRequest();
     public boolean isResponseOk();
     public byte[] getResponse();
-    public void setCompleteListener(Object listener);
-    public void setFailListener(Object listener);
+    public void setCompleteListener(IConnectionListener listener);
+    public void setFailListener(IConnectionListener listener);
 
 }
