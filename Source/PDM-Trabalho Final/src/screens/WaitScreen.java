@@ -12,6 +12,4 @@ public class WaitScreen extends Alert {
         this.owner = owner;
     }
 
-
-
 }
