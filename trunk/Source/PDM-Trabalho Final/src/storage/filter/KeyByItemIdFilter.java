@@ -1,18 +1,9 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
-
 package storage.filter;
 
 import javax.microedition.rms.RecordFilter;
 import storage.recordKey.KeyTranslator;
 import storage.recordKey.RecordKey;
 
-/**
- *
- * @author nuno.sousa
- */
 public class KeyByItemIdFilter implements RecordFilter {
 
     private final String _idItem;
