@@ -5,6 +5,7 @@ public class Constants {
     public static final int MAX_SCREENS = 11;
     
     public static final String APP_TITLE = "PENPal V1.0";
+    public static final String SVC_URL = "http://localhost:49469/PENPalService.ashx";
 
     public static final int USER_PROFILE_RECORD_ID = 1;
     public static final int CONFIG_RECORD_ID = 1;

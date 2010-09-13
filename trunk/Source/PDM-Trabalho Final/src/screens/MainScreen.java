@@ -57,6 +57,4 @@ public class MainScreen extends ListScreen {
             owner.notifyDestroyed();
         }
     }
-
-    
 }

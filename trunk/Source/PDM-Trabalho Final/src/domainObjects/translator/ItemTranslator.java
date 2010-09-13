@@ -34,8 +34,8 @@ public class ItemTranslator {// implements IITemTranslator {
         lastIndex = index + sepLen;
         index = itemStr.indexOf(Constants.TRANSLATOR_SEP, lastIndex);
 
-        //Getting Tittle
-        String tittle = itemStr.substring(lastIndex, index);
+        //Getting Title
+        String title = itemStr.substring(lastIndex, index);
 
         lastIndex = index + sepLen;
         index = itemStr.indexOf(Constants.TRANSLATOR_SEP, lastIndex);
@@ -48,7 +48,7 @@ public class ItemTranslator {// implements IITemTranslator {
         //Getting ExpiryDate
         Date expiryDate = new Date(Long.parseLong(itemStr.substring(lastIndex)));
 
-        return new Item(id, categoryId, tittle, desc, null, expiryDate);
+        return new Item(id, categoryId, title, desc, null, expiryDate);
     }
 
 }
