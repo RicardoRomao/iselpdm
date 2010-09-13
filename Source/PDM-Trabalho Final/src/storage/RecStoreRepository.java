@@ -1,9 +1,15 @@
 package storage;
 
+import constants.Constants;
+import domainObjects.Config;
 import domainObjects.Item;
+import domainObjects.User;
+import domainObjects.translator.ConfigTranslator;
 import domainObjects.translator.ItemTranslator;
+import domainObjects.translator.UserTranslator;
 import java.util.Enumeration;
 import java.util.Vector;
+import javax.microedition.rms.InvalidRecordIDException;
 import javax.microedition.rms.RecordEnumeration;
 import javax.microedition.rms.RecordStore;
 import javax.microedition.rms.RecordStoreException;
@@ -15,7 +21,10 @@ import storage.recordKey.KeyTranslator;
 import storage.recordKey.RecordKey;
 
 public final class RecStoreRepository implements IRepository
-{    
+{
+    private static final String USER_RS_NAME = "PenPal_User";
+    private static final String CONFIG_RS_NAME = "PenPal_Config";
+
     private static final String ITEM_RS_NAME = "PenPal_Item";
     private static final String OWN_ITEM_RS_NAME = "PenPal_OwnItem";
     private static final String KEY_RS_NAME = "PenPal_ItemKey";
@@ -82,6 +91,25 @@ public final class RecStoreRepository implements IRepository
     }
     public void deleteOwnItem(Item i) {
         deleteItem(i);
+    }
+
+    //User Profile
+    public User getUserProfile() {
+        return UserTranslator.byte2User(getUserRecord());
+    }
+    public void updateUserProfile(User u) {
+        updateUserRecord(UserTranslator.user2Byte(u));
+    }
+    public void deleteUserProfile() {
+        deleteUserRecord();
+    }
+
+    //Config
+    public Config getConfig() {
+        return ConfigTranslator.byte2Config(getConfigRecord());
+    }
+    public void updateConfig(Config c) {
+        updateConfigRecord(ConfigTranslator.config2Byte(c));
     }
 
     //IRepository End
@@ -368,7 +396,108 @@ public final class RecStoreRepository implements IRepository
             }
         }
     }
-   
+
+    //RUD User Profile
+    private byte[] getUserRecord(){
+        RecordStore rs = null;
+        byte[] userByteArr = null;
+        try{
+            rs = RecordStore.openRecordStore(USER_RS_NAME, true);
+            userByteArr = rs.getRecord(Constants.USER_PROFILE_RECORD_ID);
+        } catch(InvalidRecordIDException rie) {
+        } catch(RecordStoreException ex) {
+            throw new NotExpectedException("getUser: " + ex.getMessage());
+        } finally {
+            try{
+                rs.closeRecordStore();
+            }catch(RecordStoreException ex){
+               throw new NotExpectedException("getUser: " + ex.getMessage());
+            }
+        }
+        return userByteArr;
+    }
+    private void updateUserRecord(byte[] userByteArr){
+        RecordStore rs = null;
+        try{
+            rs = RecordStore.openRecordStore(USER_RS_NAME, true);
+
+            if (rs.getNumRecords() == 0)
+                rs.addRecord(null, 0, 0);
+            rs.setRecord(
+                Constants.USER_PROFILE_RECORD_ID,
+                userByteArr,
+                0,
+                userByteArr.length
+            );
+        }catch(RecordStoreException ex){
+            throw new NotExpectedException("saveUser: " + ex.getMessage());
+        }finally{
+            try{
+                rs.closeRecordStore();
+            }catch(RecordStoreException ex){
+               throw new NotExpectedException("saveUser: " + ex.getMessage());
+            }
+        }
+    }
+    private void deleteUserRecord(){
+        RecordStore rs = null;
+        try{
+            rs = RecordStore.openRecordStore(USER_RS_NAME, true);
+            rs.deleteRecord(Constants.USER_PROFILE_RECORD_ID);
+        }catch(RecordStoreException ex){
+            throw new NotExpectedException("DeleteUser - RecordStore: " + ex.getMessage());
+        }finally{
+            try{
+                rs.closeRecordStore();
+            }catch(RecordStoreException ex){
+                throw new NotExpectedException("deleteUser: " + ex.getMessage());
+            }
+        }
+    }
+
+    //RU Config
+    private byte[] getConfigRecord(){
+        RecordStore rs = null;
+        byte[] configByteArr = null;
+        try{
+            rs = RecordStore.openRecordStore(USER_RS_NAME, true);
+            configByteArr = rs.getRecord(Constants.CONFIG_RECORD_ID);
+        } catch(InvalidRecordIDException rie) {
+        } catch(RecordStoreException ex) {
+            throw new NotExpectedException("getConfig: " + ex.getMessage());
+        } finally {
+            try{
+                rs.closeRecordStore();
+            }catch(RecordStoreException ex){
+               throw new NotExpectedException("getConfig: " + ex.getMessage());
+            }
+        }
+        return configByteArr;
+    }
+    private void updateConfigRecord(byte[] configByteArr){
+        RecordStore rs = null;
+        try{
+            rs = RecordStore.openRecordStore(CONFIG_RS_NAME, true);
+
+            if (rs.getNumRecords() == 0)
+                rs.addRecord(null, 0, 0);
+            rs.setRecord(
+                Constants.CONFIG_RECORD_ID,
+                configByteArr,
+                0,
+                configByteArr.length
+            );
+        }catch(RecordStoreException ex){
+            throw new NotExpectedException("saveConfig: " + ex.getMessage());
+        }finally{
+            try{
+                rs.closeRecordStore();
+            }catch(RecordStoreException ex){
+               throw new NotExpectedException("saveConfig: " + ex.getMessage());
+            }
+        }
+    }
+
     //Just for test purpose
     public int getItemsCount(){
         RecordStore rs = null;
@@ -405,6 +534,8 @@ public final class RecStoreRepository implements IRepository
                     RecordStore.deleteRecordStore(ITEM_RS_NAME);
                 if(recStoreList[i].equals(OWN_ITEM_RS_NAME))
                     RecordStore.deleteRecordStore(OWN_ITEM_RS_NAME);
+                if(recStoreList[i].equals(USER_RS_NAME))
+                    RecordStore.deleteRecordStore(USER_RS_NAME);
             }
         }catch(RecordStoreException ex){
             throw new NotExpectedException("Clearing RecordStores: " + ex.getMessage());

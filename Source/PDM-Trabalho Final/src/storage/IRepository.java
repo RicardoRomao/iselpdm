@@ -1,6 +1,8 @@
 package storage;
 
+import domainObjects.Config;
 import domainObjects.Item;
+import domainObjects.User;
 import java.util.Vector;
 
 public interface IRepository {
@@ -17,4 +19,11 @@ public interface IRepository {
 
     public int getItemsCount();
     public int getOwnItemsCount();
+    
+    public User getUserProfile();
+    public void updateUserProfile(User u);
+    public void deleteUserProfile();
+
+    public Config getConfig();
+    public void updateConfig(Config c);
 }

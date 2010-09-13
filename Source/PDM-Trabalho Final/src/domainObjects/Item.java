@@ -11,7 +11,7 @@ public class Item {
     private byte[] _image;
     private Date _expiryDate;
 
-    public Item() { }
+    public Item() { _image = new byte[0]; }
 
     public Item(int id, int category, String title, String desc,
             byte[] image, Date expiryDate) {
