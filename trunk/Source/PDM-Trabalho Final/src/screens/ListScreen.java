@@ -11,8 +11,8 @@ public abstract class ListScreen extends List implements CommandListener {
     protected final PenPAL owner;
     protected final Command cmdBack, cmdOk;
 
-    public ListScreen(PenPAL owner, String title, String[] labels, Image[] imgs) {
-        super(title, List.IMPLICIT, labels, imgs);
+    public ListScreen(PenPAL owner, String title) {
+        super(title, List.IMPLICIT);
         this.owner = owner;
 
         cmdBack = new Command("Back", Command.BACK, 1);

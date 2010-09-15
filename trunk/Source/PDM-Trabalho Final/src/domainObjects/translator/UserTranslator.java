@@ -14,7 +14,7 @@ public class UserTranslator {
 
     public static User byte2User(byte[] user) {
         if (user == null)
-            return new User(0,"","");
+            return null;
         
         String userStr = new String(user);
         int index, lastIndex = 0;
