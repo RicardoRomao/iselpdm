@@ -13,7 +13,7 @@ public class ItemListScreen extends ListScreen{
     private int parentRef;
 
     public ItemListScreen(PenPAL owner) {
-        super(owner, Constants.APP_TITLE, new String[0], null);
+        super(owner, Constants.APP_TITLE);
     }
 
     public void initList(Vector items, int parentRef) {

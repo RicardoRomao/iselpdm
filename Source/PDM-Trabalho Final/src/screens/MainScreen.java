@@ -1,14 +1,10 @@
 package screens;
 
 import constants.Constants;
-import domainObjects.Item;
 import entryPoint.PenPAL;
-import java.util.Date;
 import javax.microedition.lcdui.Command;
 import javax.microedition.lcdui.Displayable;
 import javax.microedition.lcdui.Image;
-import storage.IRepository;
-import storage.RecStoreRepository;
 
 public class MainScreen extends ListScreen {
 
@@ -25,14 +21,20 @@ public class MainScreen extends ListScreen {
     private static final Image[] itemImages = {null, null, null, null, null, null};
 
     public MainScreen(PenPAL owner) {
-        super(owner, Constants.APP_TITLE, itemLabels, itemImages);
+        super(owner, Constants.APP_TITLE);
+        for (int i=0 ; i<itemLabels.length ; i++)
+            append(itemLabels[i],itemImages[i]);
         addCommand(cmdExit);
         removeCommand(cmdBack);
     }
 
     public void commandAction(Command cmd, Displayable d) {
         if (cmd == cmdOk) {
-
+            int idx = this.getSelectedIndex();
+            if (idx != IDX_PROFILE && idx != IDX_SETTINGS && !owner.hasUserProfile()) {
+                owner.showWaitScreen("Please create a profile first!");
+                return;
+            }
             switch(this.getSelectedIndex()) {
                 case (IDX_PROFILE) :
                     owner.showProfileScreen();

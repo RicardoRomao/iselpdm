@@ -21,7 +21,6 @@ import screens.ItemViewScreen;
 import screens.MainScreen;
 import screens.ProfileScreen;
 import screens.QueryScreen;
-import screens.WaitScreen;
 import storage.IRepository;
 import storage.RecStoreRepository;
 
@@ -58,19 +57,21 @@ public class PenPAL extends MIDlet implements IConnectionListener {
         if (!isInited) {
             init();
         }
-        screens[IDX_MAIN_SCREEN] = new MainScreen(this);
+        showMainScreen();
     }
 
     protected void pauseApp() {
     }
 
     protected void destroyApp(boolean unconditional) throws MIDletStateChangeException {
-        for (int i = 0; i < screens.length; i++) {
-            if (screens[i] != null) {
-                screens[i] = null;
+        if (screens != null) {
+            for (int i = 0; i < screens.length; i++) {
+                if (screens[i] != null) {
+                    screens[i] = null;
+                }
             }
+            screens = null;
         }
-        screens = null;
         rep = null;
     }
 
@@ -85,6 +86,8 @@ public class PenPAL extends MIDlet implements IConnectionListener {
     public void updateUserProfile(User user) {
         rep.updateUserProfile(user);
     }
+
+    public boolean hasUserProfile() { return rep.getUserProfile() != null; }
 
     public void updateConfig(Config c) {
         this.config = c;
@@ -110,21 +113,27 @@ public class PenPAL extends MIDlet implements IConnectionListener {
         con.init();
         con.send();
 
-        showWaitScreen();
-        ((Alert)screens[IDX_WAIT_SCREEN]).setString("A Comunicar...");
+        showWaitScreen("A comunicar....");
 
         if (config.getSaveOwnItems()) {
             addOwnItem(item);
         }
     }
 
-    private void showWaitScreen() {
+    public void showWaitScreen() { showWaitScreen(null); }
+
+    public void showWaitScreen(String msg) {
         if (screens[IDX_WAIT_SCREEN] == null) {
-            screens[IDX_WAIT_SCREEN] = new WaitScreen(this);
+            screens[IDX_WAIT_SCREEN] = new Alert(Constants.APP_TITLE);
         }
+        ((Alert)screens[IDX_WAIT_SCREEN]).setString(msg);
+        display.setCurrent(screens[IDX_WAIT_SCREEN]);
     }
 
     public void showMainScreen() {
+        if (screens[IDX_MAIN_SCREEN] == null) {
+            screens[IDX_MAIN_SCREEN] = new MainScreen(this);
+        }
         display.setCurrent(screens[IDX_MAIN_SCREEN]);
     }
 
