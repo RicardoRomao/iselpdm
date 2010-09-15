@@ -9,6 +9,7 @@ import domainObjects.Item;
 import domainObjects.User;
 import javax.microedition.io.HttpConnection;
 import javax.microedition.lcdui.Alert;
+import javax.microedition.lcdui.AlertType;
 import javax.microedition.lcdui.Display;
 import javax.microedition.lcdui.Displayable;
 import javax.microedition.midlet.MIDlet;
@@ -113,18 +114,19 @@ public class PenPAL extends MIDlet implements IConnectionListener {
         con.init();
         con.send();
 
-        showWaitScreen("A comunicar....");
+        showWaitScreen("A comunicar....", AlertType.INFO);
 
         if (config.getSaveOwnItems()) {
             addOwnItem(item);
         }
     }
 
-    public void showWaitScreen() { showWaitScreen(null); }
+    public void showWaitScreen() { showWaitScreen(null, AlertType.INFO); }
 
-    public void showWaitScreen(String msg) {
+    public void showWaitScreen(String msg, AlertType type) {
         if (screens[IDX_WAIT_SCREEN] == null) {
-            screens[IDX_WAIT_SCREEN] = new Alert(Constants.APP_TITLE);
+            screens[IDX_WAIT_SCREEN] = new Alert(Constants.APP_TITLE,null, null,type);
+            ((Alert)screens[IDX_WAIT_SCREEN]).setTimeout(Alert.FOREVER);
         }
         ((Alert)screens[IDX_WAIT_SCREEN]).setString(msg);
         display.setCurrent(screens[IDX_WAIT_SCREEN]);

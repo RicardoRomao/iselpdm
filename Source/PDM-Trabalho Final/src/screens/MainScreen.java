@@ -2,6 +2,7 @@ package screens;
 
 import constants.Constants;
 import entryPoint.PenPAL;
+import javax.microedition.lcdui.AlertType;
 import javax.microedition.lcdui.Command;
 import javax.microedition.lcdui.Displayable;
 import javax.microedition.lcdui.Image;
@@ -32,7 +33,7 @@ public class MainScreen extends ListScreen {
         if (cmd == cmdOk) {
             int idx = this.getSelectedIndex();
             if (idx != IDX_PROFILE && idx != IDX_SETTINGS && !owner.hasUserProfile()) {
-                owner.showWaitScreen("Please create a profile first!");
+                owner.showWaitScreen("Please create a profile first!", AlertType.ERROR);
                 return;
             }
             switch(this.getSelectedIndex()) {
