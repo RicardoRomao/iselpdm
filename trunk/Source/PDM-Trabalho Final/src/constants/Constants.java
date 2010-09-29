@@ -1,7 +1,6 @@
 package constants;
 
 public class Constants {
-
     public static final int MAX_SCREENS = 11;
     
     public static final String APP_TITLE = "PENPal V1.0";
