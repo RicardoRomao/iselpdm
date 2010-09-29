@@ -1,5 +1,6 @@
 package entryPoint;
 
+import asyncDispatch.AsyncDispatcher;
 import connector.HttpConnector;
 import connector.IConnectionDecorator;
 import connector.IConnectionListener;
@@ -96,7 +97,6 @@ public class PenPAL extends MIDlet implements IConnectionListener {
     }
 
     public void sendItem(Item item) {
-
         //TODO: CALL TO CONNECTOR SENDING AN ITEM
         con = HttpConnector.getInstance();
         con.setCompleteListener(this);
@@ -107,7 +107,7 @@ public class PenPAL extends MIDlet implements IConnectionListener {
         con.addParameter("action", "add");
         con.addParameter("title", item.getTitle());
         con.addParameter("description", item.getDesc());
-        con.addParameter("expirydate", new Long(item.getExpiryDate().getTime()));
+        con.addParameter("expirydate", new Integer((int)item.getExpiryDate().getTime()));
         con.addParameter("user", new Integer(rep.getUserProfile().getId()));
         con.addParameter("category", new Integer(item.getCategory()));
 
@@ -125,7 +125,7 @@ public class PenPAL extends MIDlet implements IConnectionListener {
 
     public void showWaitScreen(String msg, AlertType type) {
         if (screens[IDX_WAIT_SCREEN] == null) {
-            screens[IDX_WAIT_SCREEN] = new Alert(Constants.APP_TITLE,null, null,type);
+            screens[IDX_WAIT_SCREEN] = new Alert(Constants.APP_TITLE, null, null, type);
             ((Alert)screens[IDX_WAIT_SCREEN]).setTimeout(Alert.FOREVER);
         }
         ((Alert)screens[IDX_WAIT_SCREEN]).setString(msg);

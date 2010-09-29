@@ -18,6 +18,7 @@ public class HttpConnector implements IConnectionDecorator, IConnectionListener 
     private volatile boolean bUse = false;
 
     private HttpConnector() {
+        bUse = false;
         _params = new Hashtable();
         _method = HttpConnection.POST;
     }
@@ -51,15 +52,15 @@ public class HttpConnector implements IConnectionDecorator, IConnectionListener 
         bUse = true;
         try {
             String rawData = buildQueryString();
-            String endPoint = _url + ((_method.compareTo(HttpConnection.POST) == 0)?"":rawData);
+            String endPoint = _url + ((_method.compareTo(HttpConnection.POST) == 0)?"":"?"+rawData);
             _con = (HttpConnection) Connector.open(endPoint);
+            _con.setRequestMethod(_method);
             if (_method.compareTo(HttpConnection.POST) == 0) {
                 _con.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
-                _con.setRequestProperty("Content-Length", String.valueOf(rawData.length()));
+                _con.setRequestProperty("Content-Length ", String.valueOf(rawData.length()));
 
                 OutputStream os = _con.openOutputStream();
                 os.write(rawData.getBytes());
-                os.flush();
                 os.close();
             }
         } catch (IOException ex) {
@@ -87,7 +88,6 @@ public class HttpConnector implements IConnectionDecorator, IConnectionListener 
     }
 
     public void send() {
-        //init();
         final IConnectionDecorator obj = this;
         _worker = new Thread() {
             public void run() {
