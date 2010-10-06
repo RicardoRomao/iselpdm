@@ -1,14 +1,10 @@
 package entryPoint;
 
-import asyncDispatch.AsyncDispatcher;
-import connector.HttpConnector;
-import connector.IConnectionDecorator;
-import connector.IConnectionListener;
+import connector.ConnectionMediator;
 import constants.Constants;
 import domainObjects.Config;
 import domainObjects.Item;
 import domainObjects.User;
-import javax.microedition.io.HttpConnection;
 import javax.microedition.lcdui.Alert;
 import javax.microedition.lcdui.AlertType;
 import javax.microedition.lcdui.Display;
@@ -26,13 +22,13 @@ import screens.QueryScreen;
 import storage.IRepository;
 import storage.RecStoreRepository;
 
-public class PenPAL extends MIDlet implements IConnectionListener {
+public class PenPAL extends MIDlet {
 
     private boolean isInited;
     private Display display;
     private Config config;
+    private ConnectionMediator con;
     private static IRepository rep = new RecStoreRepository();
-    private static IConnectionDecorator con;
     private static Displayable[] screens = new Displayable[Constants.MAX_SCREENS];
     private static final int IDX_MAIN_SCREEN = 0;
     private static final int IDX_PROFILE_SCREEN = 1;
@@ -53,6 +49,7 @@ public class PenPAL extends MIDlet implements IConnectionListener {
     private void init() {
         display = Display.getDisplay(this);
         config = rep.getConfig();
+        con = new ConnectionMediator(this);
     }
 
     protected void startApp() throws MIDletStateChangeException {
@@ -87,7 +84,10 @@ public class PenPAL extends MIDlet implements IConnectionListener {
 
     public void updateUserProfile(User user) {
         rep.updateUserProfile(user);
+        con.setUser(user);
     }
+
+    public User getUserProfile() { return rep.getUserProfile(); }
 
     public boolean hasUserProfile() { return rep.getUserProfile() != null; }
 
@@ -98,24 +98,10 @@ public class PenPAL extends MIDlet implements IConnectionListener {
 
     public void sendItem(Item item) {
         //TODO: CALL TO CONNECTOR SENDING AN ITEM
-        con = HttpConnector.getInstance();
-        con.setCompleteListener(this);
-        con.setFailListener(this);
-        con.setUrl(Constants.SVC_URL);
-        con.setMethod(HttpConnection.POST);
-
-        con.addParameter("action", "add");
-        con.addParameter("title", item.getTitle());
-        con.addParameter("description", item.getDesc());
-        con.addParameter("expirydate", new Integer((int)item.getExpiryDate().getTime()));
-        con.addParameter("user", new Integer(rep.getUserProfile().getId()));
-        con.addParameter("category", new Integer(item.getCategory()));
-
-        con.init();
-        con.send();
-
         showWaitScreen("A comunicar....", AlertType.INFO);
+    }
 
+    public void sendItemComplete(Item item) {
         if (config.getSaveOwnItems()) {
             addOwnItem(item);
         }
@@ -209,6 +195,7 @@ public class PenPAL extends MIDlet implements IConnectionListener {
                         rep.getItemsByCat(Constants.CATEGORIES_IDX[category]),
                         parentRef);
             case IDX_SENTITEMS_SCREEN:
+                con.showSentItems();
                 //TODO: CALL TO CONNECTOR ASKING FOR OWN ITEMS
                 sufix = "Sent Items";
         }
@@ -246,17 +233,5 @@ public class PenPAL extends MIDlet implements IConnectionListener {
         }
         ((ItemCreateScreen) screens[IDX_SENDITEM_SCREEN]).cls();
         display.setCurrent(screens[IDX_SENDITEM_SCREEN]);
-    }
-
-    public void onFail(IConnectionDecorator con) {
-        showWaitScreen();
-        ((Alert)screens[IDX_WAIT_SCREEN]).setString("FALHOU");
-        display.setCurrent((Alert)screens[IDX_WAIT_SCREEN], display.getCurrent());
-    }
-
-    public void onComplete(IConnectionDecorator con) {
-        ((Alert)screens[IDX_WAIT_SCREEN]).setString(new String(con.getResponse()));
-        display.setCurrent((Alert)screens[IDX_WAIT_SCREEN], display.getCurrent());
-        display.setCurrent(screens[IDX_MAIN_SCREEN]);
     }
 }

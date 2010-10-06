@@ -5,6 +5,7 @@ using System.Web;
 using System.Data;
 using System.Data.SqlClient;
 using System.Configuration;
+using System.Text;
 
 namespace PENPalWebApp
 {
@@ -20,6 +21,9 @@ namespace PENPalWebApp
 				case "add":
 					resp = AddItem(context);
 					break;
+				case "list":
+					resp = ListItems(context);
+					break;
 				default:
 					break;
 			}
@@ -27,6 +31,61 @@ namespace PENPalWebApp
 			context.Response.ContentType = "text/plain";
 			context.Response.AppendHeader("Content-Length", resp.Length.ToString());
 			context.Response.Write(resp);
+		}
+
+		private string ListItems(HttpContext ctx)
+		{
+			SqlConnection con = new SqlConnection(ConfigurationManager.ConnectionStrings["bd"].ConnectionString);
+			SqlCommand cmd = con.CreateCommand();
+			SqlDataReader reader;
+			String query;
+			SqlParameter param;
+			String ret;
+			Int32 numReg = 0;
+			StringBuilder sb = new StringBuilder(25);
+			// |
+			// id, categoryId, Title, Description, ExpiryDate
+
+			query = "SELECT * FROM Item WHERE UserId = @UserId";
+
+			cmd.CommandText = query;
+			cmd.CommandType = CommandType.Text;
+
+			// User Id
+			param = new SqlParameter("@UserId", SqlDbType.Int);
+			param.Value = ctx.Request["user"];
+			cmd.Parameters.Add(param);
+
+			con.Open();
+			reader = cmd.ExecuteReader();
+			while (reader.Read())
+			{
+				if (sb.Length > 0)
+				{
+					sb.Append("#");
+				}
+				sb.Append(reader.GetInt32(0));
+				sb.Append("|");
+				sb.Append(reader.GetInt32(6));
+				sb.Append("|");
+				sb.Append(reader.GetString(1));
+				sb.Append("|");
+				sb.Append(reader.GetString(2));
+				sb.Append("|");
+				sb.Append(reader.GetInt32(4));
+				numReg++;
+			}
+			reader.Close();
+			con.Close();
+
+			cmd.Dispose();
+			con.Dispose();
+
+			sb.Insert(0, numReg + "«");
+			ret = sb.ToString();
+			sb.Length = 0;
+
+			return ret;
 		}
 
 		private string AddItem(HttpContext ctx)
