@@ -6,6 +6,7 @@ import javax.microedition.io.*;
 import storage.Exception.NotExpectedException;
 
 public class HttpConnector implements IConnectionDecorator, IConnectionListener {
+
     private String _url;
     private String _method;
     private Hashtable _params;
@@ -28,31 +29,41 @@ public class HttpConnector implements IConnectionDecorator, IConnectionListener 
     }
 
     public void addParameter(String key, Object value) {
-        if (bUse) return;
+        if (bUse) {
+            return;
+        }
         _params.put(key, value);
     }
 
     public Object removeParameter(String key) {
-        if (bUse) return null;
+        if (bUse) {
+            return null;
+        }
         return _params.remove(key);
     }
 
     public void setMethod(String method) {
-        if (bUse) return;
+        if (bUse) {
+            return;
+        }
         _method = method;
     }
 
     public void setUrl(String url) {
-        if (bUse) return;
+        if (bUse) {
+            return;
+        }
         _url = url;
     }
 
     public void init() {
-        if (bUse) return;
+        if (bUse) {
+            return;
+        }
         bUse = true;
         try {
             String rawData = buildQueryString();
-            String endPoint = _url + ((_method.compareTo(HttpConnection.POST) == 0)?"":"?"+rawData);
+            String endPoint = _url + ((_method.compareTo(HttpConnection.POST) == 0) ? "" : "?" + rawData);
             _con = (HttpConnection) Connector.open(endPoint);
             _con.setRequestMethod(_method);
             if (_method.compareTo(HttpConnection.POST) == 0) {
@@ -74,7 +85,7 @@ public class HttpConnector implements IConnectionDecorator, IConnectionListener 
         Enumeration keys = _params.keys();
         String key;
 
-        while(keys.hasMoreElements()) {
+        while (keys.hasMoreElements()) {
             key = keys.nextElement().toString();
             if (query.length() > 0) {
                 query.append("&");
@@ -89,60 +100,51 @@ public class HttpConnector implements IConnectionDecorator, IConnectionListener 
 
     public void send() {
         final IConnectionDecorator obj = this;
-        _worker = new Thread() {
-            public void run() {
-                boolean failed = false;
-
+        boolean failed = false;
+        try {
+            _responseCode = _con.getResponseCode();
+            if (isResponseOk()) {
+                InputStream is = _con.openInputStream();
+                long len = _con.getLength();
+                if (len == -1) {
+                    ByteArrayOutputStream bos = new ByteArrayOutputStream();
+                    int bite;
+                    while ((bite = is.read()) != -1) {
+                        bos.write(bite);
+                    }
+                    _res = bos.toByteArray();
+                    bos.close();
+                } else {
+                    _res = new byte[(int) len];
+                    is.read(_res, 0, (int) len);
+                }
+                is.close();
+            } else {
+                failed = true;
+            }
+        } catch (IOException ex) {
+            failed = true;
+        } finally {
+            if (_con != null) {
                 try {
-                    _responseCode = _con.getResponseCode();
-                    if (isResponseOk()) {
-                        InputStream is = _con.openInputStream();
-                        long len = _con.getLength();
-                        if (len == -1) {
-                            ByteArrayOutputStream bos = new ByteArrayOutputStream();
-                            int bite;
-                            while ((bite = is.read()) != -1) {
-                                bos.write(bite);
-                            }
-                            _res = bos.toByteArray();
-                            bos.close();
-                        }
-                        else {
-                            _res = new byte[(int)len];
-                            is.read(_res, 0, (int)len);
-                        }
-                        is.close();
-                    }
-                    else {
-                        failed = true;
-                    }
+                    _con.close();
                 } catch (IOException ex) {
-                    failed = true;
-                }
-                finally {
-                    if (_con != null) {
-                        try {
-                            _con.close();
-                        } catch (IOException ex) {
-                            throw new NotExpectedException(ex.getMessage());
-                        }
-                    }
-                }
-
-                if (failed) {
-                    onFail(obj);
-                }
-                else {
-                    onComplete(obj);
+                    throw new NotExpectedException(ex.getMessage());
                 }
             }
-        };
-        _worker.start();
+        }
+
+        if (failed) {
+            onFail(obj);
+        } else {
+            onComplete(obj);
+        }
     }
 
     public void cancelRequest() {
-        if (_worker != null && _worker.isAlive())
+        if (_worker != null && _worker.isAlive()) {
             _worker.interrupt();
+        }
     }
 
     public boolean isResponseOk() {
