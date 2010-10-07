@@ -6,6 +6,7 @@ using System.Data;
 using System.Data.SqlClient;
 using System.Configuration;
 using System.Text;
+using System.Threading;
 
 namespace PENPalWebApp
 {
@@ -113,8 +114,8 @@ namespace PENPalWebApp
 			cmd.Parameters.Add(param);
 
 			// Expiry Date
-			param = new SqlParameter("@ExpiryDate", SqlDbType.Int);
-			param.Value = ctx.Request["expirydate"];
+			param = new SqlParameter("@ExpiryDate", SqlDbType.BigInt);
+            param.Value = ctx.Request["expirydate"];
 			cmd.Parameters.Add(param);
 
 			// User Id
@@ -128,12 +129,12 @@ namespace PENPalWebApp
 			cmd.Parameters.Add(param);
 
 			con.Open();
-			ret = cmd.ExecuteScalar().ToString();
+            ret = cmd.ExecuteScalar().ToString();
 			con.Close();
 
 			cmd.Dispose();
 			con.Dispose();
-
+            Thread.Sleep(2000);
 			return ret;
 		}
 

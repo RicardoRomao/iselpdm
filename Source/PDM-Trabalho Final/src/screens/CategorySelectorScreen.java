@@ -9,7 +9,7 @@ import javax.microedition.lcdui.Displayable;
 
 public class CategorySelectorScreen extends FormScreen{
 
-    private int ownerRef;
+    private int _targetScreen;
     private final ChoiceGroup catSelector =
         new ChoiceGroup("Category", Choice.POPUP, Constants.CATEGORIES, null);
 
@@ -18,8 +18,8 @@ public class CategorySelectorScreen extends FormScreen{
         append(catSelector);
     }
 
-    public CategorySelectorScreen setOwnerRef(int ownerRef) {
-        this.ownerRef = ownerRef;
+    public CategorySelectorScreen setTargetScreen(int targetScreen) {
+        this._targetScreen = targetScreen;
         return this;
     }
 
@@ -27,7 +27,11 @@ public class CategorySelectorScreen extends FormScreen{
 
     public void commandAction(Command cmd, Displayable d) {
         if (cmd == cmdOk) {
-            owner.showItemListScreen(catSelector.getSelectedIndex(), ownerRef);
+            owner.resolveCategorySelection(
+                catSelector.getSelectedIndex(),
+                _targetScreen
+            );
+            //owner.showItemListScreen(catSelector.getSelectedIndex(), _targetScreen);
         } else if (cmd == cmdBack) {
             owner.showMainScreen();
         }

@@ -1,6 +1,7 @@
 package screens;
 
 import constants.Constants;
+import domainObjects.Query;
 import entryPoint.PenPAL;
 import java.util.TimeZone;
 import javax.microedition.lcdui.Choice;
@@ -10,6 +11,7 @@ import javax.microedition.lcdui.DateField;
 import javax.microedition.lcdui.Displayable;
 import javax.microedition.lcdui.Item;
 import javax.microedition.lcdui.TextField;
+import utils.Util;
 
 public class QueryScreen extends FormScreen {
 
@@ -33,9 +35,18 @@ public class QueryScreen extends FormScreen {
     }
 
     public void commandAction(Command cmd, Displayable d) {
-
         if (cmd == cmdOk) {
-
+            Query q = new Query();
+            q.setCategory(((ChoiceGroup)get(IDX_CATEGORY)).getSelectedIndex());
+            q.setKeywords(
+                Util.splitString(
+                    ((TextField)get(IDX_KEYWORDS)).getString(),' '
+                )
+            );
+            q.setLocation(((TextField)get(IDX_LOCATION)).getString());
+            q.setFrom(((DateField)get(IDX_DATE_FROM)).getDate());
+            q.setTo(((DateField)get(IDX_DATE_TO)).getDate());
+            owner.sendQuery(q);
         } else if (cmd == cmdBack) {
             owner.showMainScreen();
         }

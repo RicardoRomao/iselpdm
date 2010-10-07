@@ -4,9 +4,13 @@ import connector.ConnectionMediator;
 import constants.Constants;
 import domainObjects.Config;
 import domainObjects.Item;
+import domainObjects.Query;
 import domainObjects.User;
+import java.util.Vector;
 import javax.microedition.lcdui.Alert;
 import javax.microedition.lcdui.AlertType;
+import javax.microedition.lcdui.Command;
+import javax.microedition.lcdui.CommandListener;
 import javax.microedition.lcdui.Display;
 import javax.microedition.lcdui.Displayable;
 import javax.microedition.midlet.MIDlet;
@@ -28,6 +32,7 @@ public class PenPAL extends MIDlet {
     private Display display;
     private Config config;
     private ConnectionMediator con;
+    private Command waitCmd;
     private static IRepository rep = new RecStoreRepository();
     private static Displayable[] screens = new Displayable[Constants.MAX_SCREENS];
     private static final int IDX_MAIN_SCREEN = 0;
@@ -50,6 +55,7 @@ public class PenPAL extends MIDlet {
         display = Display.getDisplay(this);
         config = rep.getConfig();
         con = new ConnectionMediator(this);
+        isInited = true;
     }
 
     protected void startApp() throws MIDletStateChangeException {
@@ -59,8 +65,7 @@ public class PenPAL extends MIDlet {
         showMainScreen();
     }
 
-    protected void pauseApp() {
-    }
+    protected void pauseApp() {    }
 
     protected void destroyApp(boolean unconditional) throws MIDletStateChangeException {
         if (screens != null) {
@@ -78,10 +83,6 @@ public class PenPAL extends MIDlet {
         rep.addOwnItem(item);
     }
 
-    public void addItem(Item item) {
-        rep.addOwnItem(item);
-    }
-
     public void updateUserProfile(User user) {
         rep.updateUserProfile(user);
         con.setUser(user);
@@ -96,15 +97,79 @@ public class PenPAL extends MIDlet {
         rep.updateConfig(config);
     }
 
+    // SEND ITEM ---
     public void sendItem(Item item) {
-        //TODO: CALL TO CONNECTOR SENDING AN ITEM
-        showWaitScreen("A comunicar....", AlertType.INFO);
+        showCommunicatingScreen();
+        con.addItem(item);
     }
 
     public void sendItemComplete(Item item) {
         if (config.getSaveOwnItems()) {
             addOwnItem(item);
         }
+        showMainScreen();
+        showWaitScreen("Item successfully sent!", AlertType.CONFIRMATION);
+    }
+    // --- SEND ITEM
+
+    // GET SAVED ITEMS ---
+    public void savedItems(int category) {
+        showCommunicatingScreen();
+        Vector items = rep.getItemsByCat(category);
+        if (items.size() == 0) {
+            showCategorySelectorScreen(IDX_SENTITEMS_SCREEN);
+            showWaitScreen(
+                "No saved items in category '" + getCategoryName(category) + "'!",
+                AlertType.CONFIRMATION
+            );
+        } else {
+            showItemListScreen(category, IDX_SENTITEMS_SCREEN, items);
+            showWaitScreen(
+               "Successfully loaded " + items.size() + " saved items!",
+               AlertType.CONFIRMATION
+            );
+        }
+    }
+    // --- GET SAVED ITEMS
+
+    // GET SENT ITEMS ---
+    public void sentItems(int category) {
+        showCommunicatingScreen();
+        con.showSentItems(category);
+    }
+
+    public void sentItemsComplete(int category, Vector items) {
+        if (items.size() == 0) {
+            showCategorySelectorScreen(IDX_SENTITEMS_SCREEN);
+            showWaitScreen(
+                "No sent items in category '" + getCategoryName(category) + "'!",
+                AlertType.CONFIRMATION
+            );
+        } else {
+            showItemListScreen(category, IDX_SENTITEMS_SCREEN, items);
+            showWaitScreen(
+               "Successfully received " + items.size() + " sent items!",
+               AlertType.CONFIRMATION
+            );
+        }
+    }
+    // --- GET SENT ITEMS
+
+    // GET QUERY RESULT ---
+    public void sendQuery(Query q) {
+        showMainScreen();
+        showWaitScreen("Not implemented!", AlertType.WARNING);
+    }
+    // --- GET QUERY RESULT
+    public void showCommunicatingScreen() {
+        showWaitScreen("Communicating....", AlertType.INFO);
+        waitCmd = new Command("Cancel",Command.CANCEL,1);
+        addCommandToWaitScreen(new CommandListener() {
+            public void commandAction(Command c, Displayable d) {
+                con.cancel();
+                showWaitScreen("Communication canceled by user!", AlertType.ERROR);
+            }
+        });
     }
 
     public void showWaitScreen() { showWaitScreen(null, AlertType.INFO); }
@@ -114,8 +179,19 @@ public class PenPAL extends MIDlet {
             screens[IDX_WAIT_SCREEN] = new Alert(Constants.APP_TITLE, null, null, type);
             ((Alert)screens[IDX_WAIT_SCREEN]).setTimeout(Alert.FOREVER);
         }
+        if (waitCmd != null) {
+            ((Alert)screens[IDX_WAIT_SCREEN]).removeCommand(waitCmd);
+            ((Alert)screens[IDX_WAIT_SCREEN]).setCommandListener(null);
+        }
         ((Alert)screens[IDX_WAIT_SCREEN]).setString(msg);
         display.setCurrent(screens[IDX_WAIT_SCREEN]);
+    }
+
+    private void addCommandToWaitScreen(CommandListener listener) {
+        if (waitCmd != null) {
+            ((Alert)screens[IDX_WAIT_SCREEN]).addCommand(waitCmd);
+            ((Alert)screens[IDX_WAIT_SCREEN]).setCommandListener(listener);
+        }
     }
 
     public void showMainScreen() {
@@ -150,63 +226,65 @@ public class PenPAL extends MIDlet {
     }
 
     public void showSavedItemsScreen() {
-        if (screens[IDX_CATSELECTOR_SCREEN] == null) {
-            screens[IDX_CATSELECTOR_SCREEN] = new CategorySelectorScreen(this);
-        }
-        screens[IDX_SAVEDITEMS_SCREEN] = screens[IDX_CATSELECTOR_SCREEN];
-        ((CategorySelectorScreen) screens[IDX_SAVEDITEMS_SCREEN]).setOwnerRef(IDX_SAVEDITEMS_SCREEN);
-        display.setCurrent(screens[IDX_CATSELECTOR_SCREEN]);
+        showCategorySelectorScreen(IDX_SAVEDITEMS_SCREEN);
     }
-
+    
     public void showSentItemsScreen() {
-        if (screens[IDX_CATSELECTOR_SCREEN] == null) {
-            screens[IDX_CATSELECTOR_SCREEN] = new CategorySelectorScreen(this);
-        }
-        screens[IDX_SENTITEMS_SCREEN] = screens[IDX_CATSELECTOR_SCREEN];
-        ((CategorySelectorScreen) screens[IDX_SENTITEMS_SCREEN]).setOwnerRef(IDX_SENTITEMS_SCREEN);
-        display.setCurrent(screens[IDX_CATSELECTOR_SCREEN]);
+        showCategorySelectorScreen(IDX_SENTITEMS_SCREEN);
     }
 
-    public void showCategorySelectorScreen(int parentRef) {
+    public void showCategorySelectorScreen(int targetScreen) {
         if (screens[IDX_CATSELECTOR_SCREEN] == null) {
             screens[IDX_CATSELECTOR_SCREEN] = new CategorySelectorScreen(this);
         }
-        if (parentRef == -1) {
+        screens[targetScreen] = screens[IDX_CATSELECTOR_SCREEN];
+        if (targetScreen == IDX_QUERY_SCREEN) {
             showQueryScreen();
         }
-        ((CategorySelectorScreen) screens[parentRef]).setOwnerRef(parentRef);
-        display.setCurrent(screens[parentRef]);
+        ((CategorySelectorScreen) screens[targetScreen]).setTargetScreen(targetScreen);
+        display.setCurrent(screens[targetScreen]);
     }
 
-    public void showItemListScreen(int category, int parentRef) {
+    public void resolveCategorySelection(int category, int targetScreen) {
+        //Ver qual é o target e direccionar para 'Sent Items' ou 'Saved Items'
+        switch (targetScreen) 
+        {
+            case IDX_SAVEDITEMS_SCREEN:
 
-        //Called after category selection in 'Saved Items'
-        // ans 'Sent Items' screen
+                break;
+            case IDX_SENTITEMS_SCREEN:
+                sentItems(category);
+                break;
+            case -1:
 
+                break;
+        }
+    }
+
+    public void showItemListScreen(int category, int targetScreen, Vector items) {
         if (screens[IDX_ITEMLIST_SCREEN] == null) {
             screens[IDX_ITEMLIST_SCREEN] = new ItemListScreen(this);
         }
-
         String sufix = null;
-        switch (parentRef) {
+        switch (targetScreen) {
+            case IDX_QUERY_SCREEN:
+                sufix = "Query Result";
+                break;
             case IDX_SAVEDITEMS_SCREEN:
                 sufix = "Saved Items";
-                ((ItemListScreen) screens[IDX_ITEMLIST_SCREEN]).initList(
-                        rep.getItemsByCat(Constants.CATEGORIES_IDX[category]),
-                        parentRef);
+                break;
             case IDX_SENTITEMS_SCREEN:
-                con.showSentItems();
-                //TODO: CALL TO CONNECTOR ASKING FOR OWN ITEMS
                 sufix = "Sent Items";
+                break;
         }
-        //((ItemListScreen)screens[IDX_ITEMLIST_SCREEN])
+        ((ItemListScreen) screens[IDX_ITEMLIST_SCREEN]).initList(items, category);
         screens[IDX_ITEMLIST_SCREEN].setTitle(
                 Constants.APP_TITLE + " - " + sufix
                 + "(" + Constants.CATEGORIES[category] + ")");
         display.setCurrent(screens[IDX_ITEMLIST_SCREEN]);
     }
 
-    public void showItemListScreen() {
+    public void showItemListScreen(Vector items) {
         //Called after returning from 'Get Items'
         if (screens[IDX_ITEMLIST_SCREEN] == null) {
             screens[IDX_ITEMLIST_SCREEN] = new ItemListScreen(this);
@@ -233,5 +311,9 @@ public class PenPAL extends MIDlet {
         }
         ((ItemCreateScreen) screens[IDX_SENDITEM_SCREEN]).cls();
         display.setCurrent(screens[IDX_SENDITEM_SCREEN]);
+    }
+
+    private String getCategoryName(int id) {
+        return Constants.CATEGORIES[Constants.CATEGORIES_NAMES[id]];
     }
 }

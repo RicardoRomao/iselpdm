@@ -10,7 +10,7 @@ import javax.microedition.lcdui.Displayable;
 public class ItemListScreen extends ListScreen{
 
     private Vector items = null;
-    private int parentRef;
+    private int _parentScreen;
 
     public ItemListScreen(PenPAL owner) {
         super(owner, Constants.APP_TITLE);
@@ -19,7 +19,7 @@ public class ItemListScreen extends ListScreen{
     public void initList(Vector items, int parentRef) {
         cls();
         this.items = items;
-        this.parentRef = parentRef;
+        this._parentScreen = parentRef;
         for (int i=0; i<items.size(); i++)
             addListItem(((Item)items.elementAt(i)).getCategory() + " - "
                     + ((Item)items.elementAt(i)).getTitle(), null);
@@ -33,7 +33,7 @@ public class ItemListScreen extends ListScreen{
         if (cmd == cmdOk) {
             owner.showItemViewScreen((domainObjects.Item)(items.elementAt(this.getSelectedIndex())));
         } else if (cmd == cmdBack) {
-            owner.showCategorySelectorScreen(parentRef);
+            owner.showCategorySelectorScreen(_parentScreen);
         }
     }
 

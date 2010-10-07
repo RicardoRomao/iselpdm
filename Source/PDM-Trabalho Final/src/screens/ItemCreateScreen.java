@@ -9,7 +9,6 @@ import javax.microedition.lcdui.Command;
 import javax.microedition.lcdui.DateField;
 import javax.microedition.lcdui.Displayable;
 import javax.microedition.lcdui.Item;
-import javax.microedition.lcdui.TextBox;
 import javax.microedition.lcdui.TextField;
 
 public class ItemCreateScreen extends FormScreen {
@@ -34,7 +33,12 @@ public class ItemCreateScreen extends FormScreen {
             append(items[i]);
     }
 
-    public void cls() { }
+    public void cls() {
+        ((ChoiceGroup)get(IDX_CATEGORY)).setSelectedIndex(0, true);
+        ((TextField)get(IDX_TITLE)).setString(null);
+        ((TextField)get(IDX_DESC)).setString(null);
+        ((DateField)get(IDX_DATE)).setDate(null);
+    }
 
     private int getSelectedCategory() {
         return ((ChoiceGroup)items[IDX_CATEGORY]).getSelectedIndex();
@@ -50,8 +54,6 @@ public class ItemCreateScreen extends FormScreen {
             newItem.setExpiryDate(((DateField)items[IDX_DATE]).getDate());
             //newItem.setImage(null);
             owner.sendItem(newItem);
-            owner.showMainScreen();
-
         } else if (cmd == cmdBack) {
             owner.showMainScreen();
         }
